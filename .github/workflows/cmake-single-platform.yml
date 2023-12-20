@@ -1,42 +1,26 @@
-name: CI/CD for Connexec
+name: Build on Windows x64
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
 
 jobs:
   build:
     runs-on: windows-latest
-
     steps:
-      - name: Checkout code
+      - name: Set up MSVC
+        uses: ilammy/msvc-dev-command@v1
+      - name: Clone repository
         uses: actions/checkout@v2
-
-      - name: Build Connexec
+      - name: Compile
         run: |
           mkdir build
-          cp connexec/* build
           cd build
-          cmake .. -G "Visual Studio 17 2022" -A x64
-          cmake --build . --config Release
-
-      - name: Upload artifact
+          cmake -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 17 2022 Win64" ..
+          cmake --build . --config Release --target all
+      - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: connexec-windows
-          path: ./build/Release/connexec.exe
-
-  deploy:
-    needs: [build]
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Download Connexec artifact
-        uses: actions/download-artifact@v2
-        with:
-          name: connexec-windows
-
-      - name: Create release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: connexec-windows/*.exe
+          name: connexec-windows-x64
+          path: build/Release/connexec.exe
