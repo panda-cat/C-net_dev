@@ -18,13 +18,16 @@ jobs:
           dotnet-version: '6.0.x'
 
       - name: Restore dependencies
+        working-directory: connexec
         run: dotnet restore
 
       - name: Build the solution
+        working-directory: connexec/src
         run: dotnet build --configuration Release --no-restore
 
       - name: Publish the application
-        run: dotnet publish --configuration Release --no-build -r win-x64
+        working-directory: connexec
+        run: dotnet publish --configuration Release --no-build -r win-x64 /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true
 
       - name: Upload the executable file as an artifact
         uses: actions/upload-artifact@v2
