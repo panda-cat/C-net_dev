@@ -1,21 +1,33 @@
-name: MSBuild
-on: [push]
+name: Build Windows x64 Executable
+
+on:
+  push:
+    branches:
+      - main
+
 jobs:
   build:
     runs-on: windows-latest
+
     steps:
-    - uses: actions/checkout@v2
-    - name: Pack
-      run: |
-          cd C-net_dev
-          g++ -std=c++17 -Wno-narrowing connexec/ai_programing_v1.0.cpp -o connexec.exe
-          cp connexec.exe ${GITHUB_WORKSPACE}
-    - name: Upload EXE artifact
-      uses: actions/upload-artifact@v3
-      with:
-          name: connexec-windows-x64-exe
-          path: connexec.exe
-    - uses: actions/upload-artifact@v2
-      with:
-        name: Upload
-        path: build
+      - uses: actions/checkout@v2
+
+      - name: Setup .NET Core SDK
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: '6.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build the solution
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Publish the application
+        run: dotnet publish --configuration Release --no-build -r win-x64
+
+      - name: Upload the executable file as an artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: connexec-windows-x64
+          path: bin/Release/net6.0/win-x64/publish/Connexec.exe
