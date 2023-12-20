@@ -1,0 +1,186 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace Connexec
+{
+    class Program
+    {
+        private static Mutex mtx = new Mutex();
+
+        private static void LoadExcel(string excelFile, List<Dictionary<string, string>> devices)
+        {
+            using (var file = new StreamReader(excelFile))
+            {
+                string line;
+                file.ReadLine(); // Skip header
+                while ((line = file.ReadLine()) != null)
+                {
+                    var device = new Dictionary<string, string>();
+                    var fields = line.Split(',');
+                    device["host"] = fields[0];
+                    device["username"] = fields[1];
+                    device["device_type"] = fields[2];
+                    device["password"] = fields[3];
+                    device["secret"] = fields[4];
+                    device["readtime"] = fields[5];
+                    device["mult_command"] = fields[6];
+
+                    devices.Add(device);
+                }
+            }
+        }
+
+        private static void ExecuteCommands(Dictionary<string, string> device)
+        {
+            var ip = device["host"];
+            var user = device["username"];
+            var devType = device["device_type"];
+            var passwd = device["password"];
+            var secret = device["secret"];
+            var readTime = device["readtime"];
+            var cmds = device["mult_command"].Split(';');
+
+            try
+            {
+                var connOpts = new ConnectOptions
+                {
+                    Username = user,
+                    Password = passwd,
+                    Secret = secret,
+                    ReadTimeoutOverride = int.Parse(readTime)
+                };
+
+                using (var conn = new BaseConnection(devType, ip, connOpts))
+                {
+                    conn.Connect();
+
+                    string output;
+                    if (devType == "PaloAltoPanorama")
+                    {
+                        output = conn.SendMultiline(cmds, "> ");
+                    }
+                    else if (devType == "Huawei" || devType == "HuaweiTelnet" || devType == "HPComware" || devType == "HPComwareTelnet")
+                    {
+                        output = conn.SendMultiline(cmds);
+                    }
+                    else
+                    {
+                        conn.Enable();
+                        output = conn.SendMultiline(cmds);
+                    }
+
+                    mtx.Lock();
+                    string outputDir = $"./result{GetDate()}";
+                    Directory.CreateDirectory(outputDir);
+                    using (var file = new StreamWriter($"{outputDir}/{ip}.txt"))
+                    {
+                        file.Write(output);
+                    }
+                    mtx.Unlock();
+
+                    Console.WriteLine($"Executed commands on {ip}");
+                }
+            }
+            catch (NetmikoTimeoutException e)
+            {
+                mtx.Lock();
+                using (var file = new StreamWriter("login_failed_list.txt", true))
+                {
+                    file.WriteLine($"{ip} Login timed out");
+                }
+                mtx.Unlock();
+                Console.WriteLine($"Login timed out on {ip}");
+            }
+            catch (NetmikoAuthenticationException e)
+            {
+                mtx.Lock();
+                using (var file = new StreamWriter("login_failed_list.txt", true))
+                {
+                    file.WriteLine($"{ip} Invalid username or password");
+                }
+                mtx.Unlock();
+                Console.WriteLine($"Invalid username or password on {ip}");
+            }
+        }
+
+        private static string GetDate()
+        {
+            return DateTime.Now.ToString("yyyyMMdd");
+        }
+
+        static void Main(string[] args)
+        {
+            string excelFile = null;
+            int numThreads = 4;
+
+            try
+            {
+                for (int i = 0; i < args.Length; i++)
+                {
+                    switch (args[i])
+                    {
+                        case "-c":
+                            excelFile = args[i + 1];
+                            break;
+                        case "-t":
+                            numThreads = int.Parse(args[i + 1]);
+                            break;
+                        default:
+                            Console.WriteLine("Usage: connexec -c <excel_file> -t <num_threads default:4>");
+                            return;
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Error: {e.Message}");
+                Console.WriteLine("Usage: connexec -c <excel_file> -t <num_threads default:4>");
+                return;
+            }
+
+            if (string.IsNullOrEmpty(excelFile))
+            {
+                Console.WriteLine("Error: Excel file not specified");
+                Console.WriteLine("Usage: connexec -c <excel_file> -t <num_threads default:4>");
+                return;
+            }
+
+            var devices = new List<Dictionary<string, string>>();
+            LoadExcel(excelFile, devices);
+
+            var futures = new List<Task>();
+            for (int i = 0; i < numThreads; i++)
+            {
+                futures.Add(Task.Run(() =>
+                {
+                    while (devices.Count > 0)
+                    {
+                        Dictionary<string, string> device;
+                        lock (devices)
+                        {
+                            if (devices.Count > 0)
+                            {
+                                device = devices[0];
+                                devices.RemoveAt(0);
+                            }
+                            else
+                            {
+                                break;
+                            }
+                        }
+
+                        ExecuteCommands(device);
+                    }
+                }));
+            }
+
+            Task.WaitAll(futures.ToArray());
+        }
+    }
+}
