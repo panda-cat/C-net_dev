@@ -1,33 +1,33 @@
-name: Build on Windows x64
+name: Build Windows x64 EXE
 
 on:
   push:
     branches:
-      - master
+      - main
 
 jobs:
-  build:
+  build-exe:
     runs-on: windows-latest
-
     steps:
-      - name: Checkout code
+      - name: Set up MSVC
+        uses: actions/setup-msvc@v1
+        with:
+          msvc-version: '17.0'
+      - name: Install MinGW
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          packages: mingw-w64-i686-gcc mingw-w64-x86_64-gcc
+      - name: Clone repository
         uses: actions/checkout@v3
-
-      - name: Create Build Environment
+      - name: Build EXE
         run: |
-          mkdir build
-          cd build
-
-      - name: Compile
-        run: |
-          cl /nologo /EHsc /I .. /Fe:main.exe ..\ai_programing_v1.0.cpp
-
-      - name: Run tests
-        run: |
-          main.exe
-
-      - name: Upload build artifacts
+          cd connexec/ai_programing_v1.0.cpp
+          g++ -std=c++17 -Wno-narrowing main.cpp -o connexec.exe
+          cp connexec.exe ${GITHUB_WORKSPACE}
+      - name: Upload EXE artifact
         uses: actions/upload-artifact@v3
         with:
-          name: main.exe
-          path: build/main.exe
+          name: connexec-windows-x64-exe
+          path: connexec.exe
