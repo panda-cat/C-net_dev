@@ -16,8 +16,7 @@ import (
     "sync"
     "time"
 
-    "github.com/golang/crypto/tree/master/ssh"
-    "github.com/golang/crypto/tree/master/ssh/terminal"
+    "github.com/golang/crypto"
 )
 
 var (
