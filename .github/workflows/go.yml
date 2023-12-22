@@ -20,6 +20,10 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v3
 
+      - name: Download crypto module
+        run: |
+          go mod download
+
       - name: Build EXE
         run: |
           cd src
