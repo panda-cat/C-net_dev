@@ -21,12 +21,15 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v3
 
-      - name: Add crypto module to go.mod
+      - name: Add crypto and term modules to go.mod
         run: |
           echo "module github.com/panda-cat/C-net_dev" >> go.mod
-          echo "require golang.org/x/crypto v0.17.0" >> go.mod
+          echo "require (
+            golang.org/x/crypto v0.17.0
+            golang.org/x/term v0.3.0
+          )" >> go.mod
 
-      - name: Download crypto module
+      - name: Download modules
         run: |
           go mod download
 
