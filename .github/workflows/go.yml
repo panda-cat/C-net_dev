@@ -8,6 +8,9 @@ on:
 jobs:
   build:
     runs-on: windows-2022
+    env:
+      GOOS: windows
+      GOARCH: amd64
     steps:
       - name: Set up Go
         uses: actions/setup-go@v3
@@ -20,4 +23,4 @@ jobs:
       - name: Build EXE
         run: |
           cd src
-          GOOS=windows GOARCH=amd64 go build -o device-manager.exe
+          go build -o device-manager.exe
