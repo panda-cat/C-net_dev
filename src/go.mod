@@ -1,4 +1,4 @@
-module github.com/panda-cat/C-net_dev
+module golang.org/x/crypto
 
 go 1.20
 
