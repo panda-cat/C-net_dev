@@ -1,4 +1,4 @@
-name: Build Go Executable
+name: Build Windows x64 EXE
 
 on:
   push:
@@ -7,26 +7,17 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
-
+    runs-on: windows-2022
     steps:
-      - uses: actions/checkout@v3
-
-      - name: Install Go
+      - name: Set up Go
         uses: actions/setup-go@v3
         with:
-          go-version: '1.20'
+          go-version: 1.19
 
-      - name: Build Executable
-        env:
-         GO111MODULE: auto 
-         CGO_ENABLED: 0 
-         GOOS: windows 
-         GOARCH: amd64
-        run: go build -o mssh_windows_amd64.exe go_net_dev.go
+      - name: Check out code
+        uses: actions/checkout@v3
 
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: release_win
-          path: mssh_windows_amd64.exe
+      - name: Build EXE
+        run: |
+          cd src
+          GOOS=windows GOARCH=amd64 go build -o device-manager.exe
