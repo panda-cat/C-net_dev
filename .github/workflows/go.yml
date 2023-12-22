@@ -28,7 +28,12 @@ jobs:
 
       - name: Download modules
         run: |
-          go mod download
+         echo "module github.com/panda-cat/C-net_dev" >> go.mod
+         echo "require (
+            golang.org/x/crypto v0.17.0
+            golang.org/x/term v0.3.0
+          )" >> go.mod
+         go mod download
 
       - name: Build EXE
         run: |
