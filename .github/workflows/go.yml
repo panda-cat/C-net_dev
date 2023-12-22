@@ -32,5 +32,5 @@ jobs:
       - name: Build EXE
         run: |
           cd src
-          go mod tidy
+          go mod init
           go build -o device-manager.exe
