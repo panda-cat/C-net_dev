@@ -37,4 +37,4 @@ jobs:
 
       - name: Build EXE
         run: |
-          go build -o device-manager.exe go_net_dev.go
+          go build -o device-manager.exe
