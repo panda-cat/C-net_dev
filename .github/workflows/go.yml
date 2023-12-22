@@ -23,7 +23,7 @@ jobs:
       - name: Add crypto module to go.mod
         run: |
           echo "module github.com/panda-cat/C-net_dev" >> go.mod
-          echo "require github.com/golang/crypto v0.17.0" >> go.mod
+          echo "require golang.org/x/crypto v0.17.0" >> go.mod
 
       - name: Download crypto module
         run: |
