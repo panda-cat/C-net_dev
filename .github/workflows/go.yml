@@ -25,7 +25,6 @@ jobs:
         run: |
           git clone https://github.com/panda-cat/C-net_dev
           cd C-net_dev/src
-          go mod init
 
       - name: Download modules
         run: |
