@@ -20,6 +20,10 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v3
 
+      - name: Add crypto module to go.mod
+        run: |
+          echo "require golang.org/x/crypto v0.17.0" >> go.mod
+
       - name: Download crypto module
         run: |
           go mod download
