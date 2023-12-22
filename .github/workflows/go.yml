@@ -38,4 +38,5 @@ jobs:
       - name: Build EXE
         run: |
           cd src
+          go get github.com/panda-cat/C-net_dev
           go build -o device-manager.exe
