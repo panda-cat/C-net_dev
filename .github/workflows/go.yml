@@ -11,6 +11,7 @@ jobs:
     env:
       GOOS: windows
       GOARCH: amd64
+      GO111MODULE: on
     steps:
       - name: Set up Go
         uses: actions/setup-go@v3
@@ -33,4 +34,4 @@ jobs:
         run: |
           cd src
           go mod init
-          go build -o device-manager.exe
+          go build -o device-manager.exe github.com/panda-cat/C-net_dev/src
